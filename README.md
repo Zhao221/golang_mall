@@ -1,5 +1,7 @@
 # golang_mall
 关于电子商城的项目，相关的技术栈go、gin、gorm、mysql、redis
+
+
 **~.用户模块**（用户登录使用jwt）
 1.用户注册
 2.用户登录（使用hash加密算法对用户密码加密）
