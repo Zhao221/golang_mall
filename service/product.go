@@ -43,6 +43,7 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 	tmp, _ := files[0].Open()
 	var path string
 	path, err = upload.UploadToQiNiu(tmp, files[0].Size, files[0].Filename)
+	onSale,_:=strconv.ParseBool(req.OnSale)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 		Price:         req.Price,
 		DiscountPrice: req.DiscountPrice,
 		Num:           req.Num,
-		OnSale:        true,
+		OnSale:        onSale,
 		BossID:        uId,
 		BossName:      boss.UserName,
 		BossAvatar:    boss.Avatar,
@@ -79,7 +80,7 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 			ImgPath:   path,
 			Name:      file.Filename,
 		}
-		err = mysql.NewProductImgDaoByDB(productDao.DB).CreateProductImg(productImg)
+		err = mysql.NewProductImgDaoByDB().CreateProductImg(productImg)
 		if err != nil {
 
 			return err
@@ -150,7 +151,6 @@ func (s *ProductSrv) ProductList(c context.Context, req types.ProductListReq) (r
 		var filename string
 		global.GVA_DB.Table("product_img").Select("name").Where("id", p.ID).First(&filename)
 		pResp.BossAvatar = GetDownloadURL(conf.Config.Oss.AccessKeyId, conf.Config.Oss.AccessKeySecret, conf.Config.Oss.BucketName, filename)
-		pResp.ImgPath = GetDownloadURL(conf.Config.Oss.AccessKeyId, conf.Config.Oss.AccessKeySecret, conf.Config.Oss.BucketName, p.Name)
 		pRespList = append(pRespList, pResp)
 	}
 

@@ -65,3 +65,7 @@ type UserAvatar struct {
 	Name string `json:"name" gorm:"comment:文件名"` // 文件名
 	Url  string `json:"url" gorm:"comment:文件地址;size:256" `
 }
+
+type UserCheckin struct {
+	DailyCheckin *bool `json:"daily_checkin" gorm:"comment:用户今天是否签到"`
+}

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewCarouselDao(ctx context.Context) *CarouselDao {
 	return &CarouselDao{NewDBClient(ctx)}
 }
 
-func NewNewCarouselDao(db *gorm.DB) *CarouselDao {
-	return &CarouselDao{db}
+func NewNewCarouselDao() *CarouselDao {
+	return &CarouselDao{DB: global.GVA_DB}
 }
 
 func (dao *CarouselDao) ListCarousel() (r []*types.ListCarouselResp, err error) {

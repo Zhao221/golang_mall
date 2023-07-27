@@ -47,6 +47,7 @@ func NewRouter() *gin.Engine {
 			authed.POST("user/following", api.UserFollowingHandler)
 			authed.POST("user/unfollowing", api.UserUnFollowingHandler)
 			authed.POST("user/avatar", api.UploadAvatarHandler) // 上传头像
+			authed.POST("user/checkin",api.UserCheckinHandler) // 用户签到
 
 			// 商品操作
 			authed.POST("product/create", api.CreateProductHandler)

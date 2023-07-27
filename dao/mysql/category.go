@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 
 	"gorm.io/gorm"
 
@@ -16,8 +17,8 @@ func NewCategoryDao(ctx context.Context) *CategoryDao {
 	return &CategoryDao{NewDBClient(ctx)}
 }
 
-func NewCategoryDaoByDB(db *gorm.DB) *CategoryDao {
-	return &CategoryDao{db}
+func NewCategoryDaoByDB() *CategoryDao {
+	return &CategoryDao{DB: global.GVA_DB}
 }
 
 // ListCategory 分类列表

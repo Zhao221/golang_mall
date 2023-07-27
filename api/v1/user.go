@@ -23,9 +23,10 @@ func UserRegisterHandler(c *gin.Context) {
 		response.FailWithMessage("key长度错误,必须是6位数", c)
 		return
 	}
-	if err:=service.CheckUserName(userRegister);err!=nil{
+	if err := service.CheckUserName(userRegister); err != nil {
 		global.GVA_LOG.Error("用户名重复")
 		response.FailWithMessage("用户名重复", c)
+		return
 	}
 	if err := service.Register(userRegister); err != nil {
 		global.GVA_LOG.Error("用户注册存入数据库出错了")
@@ -43,7 +44,7 @@ func UserLoginHandler(c *gin.Context) {
 		response.FailWithMessage("用户登录，绑定参数出错了", c)
 		return
 	}
-	resp, err := service.UserLogin(c.Request.Context(),login)
+	resp, err := service.UserLogin(c.Request.Context(), login)
 	if err != nil {
 		global.GVA_LOG.Error("用户登录出错了")
 		response.FailWithMessage("用户登录出错了", c)
@@ -155,10 +156,27 @@ func UserUnFollowingHandler(c *gin.Context) {
 func UploadAvatarHandler(c *gin.Context) {
 	file, fileHeader, _ := c.Request.FormFile("file")
 	fileSize := fileHeader.Size
-	resp ,err :=service.UserAvatarUpload(c.Request.Context(),file,fileSize,fileHeader.Filename)
-	if err!=nil{
+	resp, err := service.UserAvatarUpload(c.Request.Context(), file, fileSize, fileHeader.Filename)
+	if err != nil {
 		global.GVA_LOG.Error("上传头像时，出错了")
 		response.FailWithMessage("上传头像时，出错了", c)
+		return
 	}
-	response.OkWithDetailed(resp,"上传头像成功",c)
+	response.OkWithDetailed(resp, "上传头像成功", c)
+}
+
+func UserCheckinHandler(c *gin.Context) {
+	var req types.UserCheckin
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		global.GVA_LOG.Error("用户签到传参有误")
+		response.FailWithMessage("用户签到传参有误", c)
+		return
+	}
+	if err = service.UserCheckinService(c.Request.Context(), req); err != nil {
+		global.GVA_LOG.Error("用户签到失败")
+		response.FailWithMessage("用户签到失败", c)
+		return
+	}
+	response.OkWithMessage("用户签到成功",c)
 }

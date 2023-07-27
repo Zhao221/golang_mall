@@ -18,7 +18,7 @@ type ProductCreateReq struct {
 	Info          string `form:"info" json:"info" `                    // 描述信息
 	Price         string `form:"price" json:"price"`                   // 价格
 	DiscountPrice string `form:"discount_price" json:"discount_price"` // 折扣价格
-	OnSale        bool   `form:"on_sale" json:"on_sale"`               // 是否在售
+	OnSale        string `form:"on_sale" json:"on_sale"`               // 是否在售
 	Num           int    `form:"num" json:"num"`                       // 数量
 }
 

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/pkg/utils/log"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewUserDao(ctx context.Context) *UserDao {
 	return &UserDao{NewDBClient(ctx)}
 }
 
-func NewUserDaoByDB(db *gorm.DB) *UserDao {
-	return &UserDao{db}
+func NewUserDaoByDB() *UserDao {
+	return &UserDao{DB: global.GVA_DB}
 }
 
 // FollowUser userId 关注了 followerId
@@ -77,7 +78,7 @@ func (dao *UserDao) ListFollower(userId int64) (f []*model.User, err error) {
 }
 
 // GetUserById 根据 id 获取用户
-func (dao *UserDao) GetUserById(uId uint)(user *model.User, err error) {
+func (dao *UserDao) GetUserById(uId uint) (user *model.User, err error) {
 	err = dao.DB.Model(&model.User{}).Where("id=?", uId).First(&user).Error
 	return
 }

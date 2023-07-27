@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewFavoritesDao(ctx context.Context) *FavoritesDao {
 	return &FavoritesDao{NewDBClient(ctx)}
 }
 
-func NewFavoritesDaoByDB(db *gorm.DB) *FavoritesDao {
-	return &FavoritesDao{db}
+func NewFavoritesDaoByDB() *FavoritesDao {
+	return &FavoritesDao{DB: global.GVA_DB}
 }
 
 // ListFavoriteByUserId 通过 user_id 获取收藏夹列表

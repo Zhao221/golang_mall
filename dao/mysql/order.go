@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewOrderDao(ctx context.Context) *OrderDao {
 	return &OrderDao{NewDBClient(ctx)}
 }
 
-func NewOrderDaoByDB(db *gorm.DB) *OrderDao {
-	return &OrderDao{db}
+func NewOrderDaoByDB() *OrderDao {
+	return &OrderDao{DB: global.GVA_DB}
 }
 
 // CreateOrder 创建订单

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewAddressDao(ctx context.Context) *AddressDao {
 	return &AddressDao{NewDBClient(ctx)}
 }
 
-func NewAddressDaoByDB(db *gorm.DB) *AddressDao {
-	return &AddressDao{db}
+func NewAddressDaoByDB() *AddressDao {
+	return &AddressDao{DB: global.GVA_DB}
 }
 
 // GetAddressByAid 根据 AddressId 获取 Address

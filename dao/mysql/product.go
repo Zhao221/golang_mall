@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewProductDao(ctx context.Context) *ProductDao {
 	return &ProductDao{NewDBClient(ctx)}
 }
 
-func NewProductDaoByDB(db *gorm.DB) *ProductDao {
-	return &ProductDao{db}
+func NewProductDaoByDB() *ProductDao {
+	return &ProductDao{DB: global.GVA_DB}
 }
 
 // GetProductById 通过 id 获取product
@@ -43,8 +44,7 @@ func (dao *ProductDao) ListProductByCondition(condition map[string]interface{}, 
 
 // CreateProduct 创建商品
 func (dao *ProductDao) CreateProduct(product *model.Product) error {
-	return dao.DB.Model(&model.Product{}).
-		Create(&product).Error
+	return dao.DB.Model(&model.Product{}).Create(&product).Error
 }
 
 // CountProductByCondition 根据情况获取商品的数量

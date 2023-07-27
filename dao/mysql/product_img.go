@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/types"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ func NewProductImgDao(ctx context.Context) *ProductImgDao {
 	return &ProductImgDao{NewDBClient(ctx)}
 }
 
-func NewProductImgDaoByDB(db *gorm.DB) *ProductImgDao {
-	return &ProductImgDao{db}
+func NewProductImgDaoByDB() *ProductImgDao {
+	return &ProductImgDao{DB: global.GVA_DB}
 }
 
 // CreateProductImg 创建商品图片

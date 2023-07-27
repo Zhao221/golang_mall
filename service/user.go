@@ -8,6 +8,7 @@ import (
 	"golang_mall/conf"
 	"golang_mall/consts"
 	"golang_mall/dao/mysql"
+	"golang_mall/dao/redis"
 	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/model/common/request"
@@ -17,6 +18,8 @@ import (
 	"golang_mall/pkg/utils/upload"
 	"golang_mall/types"
 	"mime/multipart"
+	"strconv"
+	"time"
 )
 
 func CheckUserName(userRegister request.UserRegisterReq) (err error) {
@@ -31,11 +34,13 @@ func CheckUserName(userRegister request.UserRegisterReq) (err error) {
 // Register 用户注册
 func Register(userRegister request.UserRegisterReq) (err error) {
 	uR := &model.User{
-		NickName: userRegister.NickName,
-		UserName: userRegister.UserName,
-		Status:   model.Active,
-		Money:    consts.UserInitMoney,
-		Avatar:   "rxkjiutfo.hn-bkt.clouddn.com/Fmk8lKuP1nCpAkzteoAnBBAQ29-a",
+		NickName:       userRegister.NickName,
+		UserName:       userRegister.UserName,
+		Status:         model.Active,
+		Money:          consts.UserInitMoney,
+		Avatar:         "rxkjiutfo.hn-bkt.clouddn.com/Fmk8lKuP1nCpAkzteoAnBBAQ29-a",
+		MonthlyCheckin: 0,
+		YearCheckin:    0,
 	}
 	// 加密密码
 	if err = uR.SetPassword(userRegister.Password); err != nil {
@@ -122,7 +127,7 @@ func SendEmail(c context.Context, email types.SendEmailServiceReq) (resp interfa
 	address = conf.Config.Email.ValidEmail + token
 	mailText := fmt.Sprintf(consts.EmailOperationMap[email.OperationType], address)
 	if err = sender.Send(mailText, email.Email, "FanOneMall"); err != nil {
-		return nil,err
+		return nil, err
 	}
 	return resp, err
 }
@@ -224,4 +229,15 @@ func UserAvatarUpload(c context.Context, file multipart.File, fileSize int64, na
 		return nil, err
 	}
 	return path, err
+}
+func UserCheckinService(c context.Context, req types.UserCheckin) (err error) {
+	u, err := ctl.GetUserInfo(c)
+	err = mysql.NewUserDaoByDB().Model(&model.User{}).Where("id = ?", u.Id).Update("daily_checkin", req.DailyCheckin).Error
+	if err != nil {
+		return errors2.New("更新用户签到信息失败")
+	}
+	// 同步缓存
+	currentTime := time.Now()
+	redis.RedisClient.SetBit(c, strconv.Itoa(int(u.Id)), int64(currentTime.Day()), 1)
+	return
 }

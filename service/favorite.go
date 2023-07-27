@@ -58,7 +58,7 @@ func (f *FavoriteSrv) FavoriteCreate(c context.Context, req types.FavoriteCreate
 		return nil,err
 	}
 
-	bossDao := mysql.NewUserDaoByDB(userDao.DB)
+	bossDao := mysql.NewUserDaoByDB()
 	boss, err := bossDao.GetUserById(req.BossId)
 	if err != nil {
 		return nil,err

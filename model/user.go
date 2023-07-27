@@ -19,6 +19,9 @@ type User struct {
 	Status         string `json:"status"`
 	Avatar         string `gorm:"size:1000"`
 	Money          string `json:"money"`
+	DailyCheckin   *bool  `json:"daily_checkin" gorm:"column:daily_checkin"`
+	MonthlyCheckin uint   `json:"monthly_checkin" gorm:"comment:月签到次数"`
+	YearCheckin    uint   `json:"year_checkin" gorm:"comment:年签到次数"`
 	Relations      []User `gorm:"many2many:relation;"`
 }
 
@@ -53,7 +56,7 @@ func (u *User) EncryptMoney(key string) (money string, err error) {
 		return
 	}
 	money = aesObj.SecretEncrypt(u.Money)
-	return money , err
+	return money, err
 }
 
 // DecryptMoney 解密金额
@@ -63,7 +66,7 @@ func (u *User) DecryptMoney(key string) (money float64, err error) {
 		return
 	}
 	money = cast.ToFloat64(aesObj.SecretDecrypt(u.Money))
-	return money ,err
+	return money, err
 }
 
 // AvatarURL 头像地址
@@ -73,4 +76,3 @@ func (u *User) AvatarURL() string {
 	}
 	return u.Avatar
 }
-

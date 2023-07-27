@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"golang_mall/consts"
+	"golang_mall/global"
 	"golang_mall/model"
 	"gorm.io/gorm"
 )
@@ -15,8 +16,8 @@ func NewSkillGoodsDao(ctx context.Context) *SkillGoodsDao {
 	return &SkillGoodsDao{NewDBClient(ctx)}
 }
 
-func NewSkillGoodsDaoByDB(db *gorm.DB) *SkillGoodsDao {
-	return &SkillGoodsDao{db}
+func NewSkillGoodsDaoByDB() *SkillGoodsDao {
+	return &SkillGoodsDao{DB: global.GVA_DB}
 }
 
 func (dao *SkillGoodsDao) Create(in *model.SkillProduct) error {

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/pkg/e"
 	"golang_mall/types"
@@ -16,8 +17,8 @@ func NewCartDao(ctx context.Context) *CartDao {
 	return &CartDao{NewDBClient(ctx)}
 }
 
-func NewCartDaoByDB(db *gorm.DB) *CartDao {
-	return &CartDao{db}
+func NewCartDaoByDB() *CartDao {
+	return &CartDao{DB: global.GVA_DB}
 }
 
 // CreateCart 创建 cart pId(商品 id)、uId(用户id)、bId(店家id)
