@@ -1,7 +1,6 @@
 # golang_mall
 关于电子商城的项目，相关的技术栈go、gin、gorm、mysql、redis、kafka
 
-
 **涉及到的模块**
 
 **~.用户模块**
