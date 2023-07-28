@@ -43,7 +43,7 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 	tmp, _ := files[0].Open()
 	var path string
 	path, err = upload.UploadToQiNiu(tmp, files[0].Size, files[0].Filename)
-	onSale,_:=strconv.ParseBool(req.OnSale)
+	onSale, _ := strconv.ParseBool(req.OnSale)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 			ImgPath:   path,
 			Name:      file.Filename,
 		}
-		err = mysql.NewProductImgDaoByDB().CreateProductImg(productImg)
+		err = mysql.NewProductImgDao(c).CreateProductImg(productImg)
 		if err != nil {
 
 			return err
@@ -114,10 +114,10 @@ func (s *ProductSrv) ProductDelete(ctx context.Context, req *types.ProductDelete
 	if err != nil {
 		return err
 	}
-	 return err
+	return err
 }
 
-func (s *ProductSrv) ProductList(c context.Context, req types.ProductListReq) (resp interface{}, err error) {
+func ProductList(c context.Context, req types.ProductListReq) (resp interface{}, err error) {
 	var total int64
 	condition := make(map[string]interface{})
 	if req.CategoryID != 0 {
@@ -149,7 +149,7 @@ func (s *ProductSrv) ProductList(c context.Context, req types.ProductListReq) (r
 			BossAvatar:    p.BossAvatar,
 		}
 		var filename string
-		global.GVA_DB.Table("product_img").Select("name").Where("id", p.ID).First(&filename)
+		mysql.NewUserDao(c).Model(&model.ProductImg{}).Select("name").Where("id = ?", p.ID).First(&filename)
 		pResp.BossAvatar = GetDownloadURL(conf.Config.Oss.AccessKeyId, conf.Config.Oss.AccessKeySecret, conf.Config.Oss.BucketName, filename)
 		pRespList = append(pRespList, pResp)
 	}
@@ -175,7 +175,7 @@ func GetDownloadURL(accessKey, secretKey, bucket, fileName string) string {
 	// 获取文件的下载地址
 	domain, err := bucketManager.ListBucketDomains(bucket)
 	if err != nil {
-		return fmt.Sprintf("%s",errors2.New("获取空间域名失败"))
+		return fmt.Sprintf("%s", errors2.New("获取空间域名失败"))
 	}
 	deadline := time.Now().Add(time.Second * 3600).Unix() // 设置 URL 有效期为 1 小时
 	privateURL := storage.MakePrivateURL(mac, domain[0].Domain, fileName, deadline)

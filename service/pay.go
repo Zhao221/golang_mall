@@ -31,14 +31,14 @@ func (p *PaySrv) PayDown(c context.Context, req types.PaymentDownReq) (err error
 	}
 	err = mysql.NewOrderDao(c).Transaction(func(tx *gorm.DB) error {
 		uId := u.Id
-		payment, err := mysql.NewOrderDaoByDB().GetOrderById(req.OrderId, uId)
+		payment, err := mysql.NewOrderDao(c).GetOrderById(req.OrderId, uId)
 		if err != nil {
 			return err
 		}
 		money := payment.Money
 		num := payment.Num
 		money = money * float64(num)
-		userDao := mysql.NewUserDaoByDB()
+		userDao := mysql.NewUserDao(c)
 		user, err := userDao.GetUserById(uId)
 		if err != nil {
 			return err
@@ -82,20 +82,20 @@ func (p *PaySrv) PayDown(c context.Context, req types.PaymentDownReq) (err error
 			return err
 		}
 
-		productDao := mysql.NewProductDaoByDB()
-		product, err := productDao.GetProductById(uint(req.ProductID))
+		productDao := mysql.NewProductDao(c)
+		product, err := productDao.GetProductById(req.ProductID)
 		if err != nil {
 			return err
 		}
 		product.Num -= num
-		err = productDao.UpdateProduct(uint(req.ProductID), product)
+		err = productDao.UpdateProduct(req.ProductID, product)
 		if err != nil { // 更新商品数量减少失败，回滚
 			return err
 		}
 
 		// 更新订单状态
 		payment.Type = consts.OrderTypePendingShipping
-		err = mysql.NewOrderDaoByDB().UpdateOrderById(req.OrderId, uId, payment)
+		err = mysql.NewOrderDao(c).UpdateOrderById(req.OrderId, uId, payment)
 		if err != nil { // 更新订单失败，回滚
 			return err
 		}

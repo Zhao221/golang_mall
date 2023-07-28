@@ -192,7 +192,56 @@ func UserFollow(c context.Context, req types.UserFollowingReq) (resp interface{}
 		return nil, err
 	}
 	err = mysql.NewUserDao(c).FollowUser(u.Id, req.Id)
+	// 使用Redis中set数据结构实现共同关注,因为用户名是唯一的，所以用用户名作为key
+	var userName string
+	mysql.NewUserDao(c).Model(&model.User{}).Select("user_name").Where("id = ?", req.Id).First(&userName)
+	redis.RedisClient.SAdd(c, "Follow:"+strconv.Itoa(int(u.Id)), userName)
 	return resp, err
+}
+
+func UserFollowingList(c context.Context, req types.UserFollowingList) (resp interface{}, total int64, err error) {
+	limit := req.PageSize
+	offset := limit * (req.PageNum - 1)
+	u, err := ctl.GetUserInfo(c)
+	if err != nil {
+		return nil, total, err
+	}
+	var Ids []uint
+	err = mysql.NewUserDao(c).Table("relation").Select("user_id").
+		Where("relation_id = ?", u.Id).Find(&Ids).Error
+	if err != nil {
+		return nil, total, err
+	}
+	var user []types.UserFollowResp
+	mysql.NewUserDaoByDB().Model(&model.User{}).Where("id IN ?", Ids).
+		Count(&total).Limit(limit).Offset(offset).Find(&user)
+	resp = user
+	return resp, total, err
+}
+
+func UserJointAttentionList(c context.Context, req types.UserJointAttentionReq) (resp interface{}, total int64, err error) {
+	limit := req.PageSize
+	offset := limit * (req.PageNum - 1)
+	u, err := ctl.GetUserInfo(c)
+	if err!=nil{
+		return nil, total, err
+	}
+	fmt.Println(req.Id,u.Id)
+	commonFollows, err := redis.RedisClient.SInter(c, "Follow:"+strconv.Itoa(int(req.Id)),"Follow:"+strconv.Itoa(int(u.Id))).Result()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println(commonFollows)
+	var user []types.UserFollowResp
+	err = mysql.NewUserDao(c).Model(&model.User{}).Where("user_name IN ?", commonFollows).
+		Count(&total).Limit(limit).Offset(offset).
+		Find(&user).Error
+	if err != nil {
+		return nil, total, err
+	}
+	resp = user
+	return resp, total, err
 }
 
 // UserUnFollow 取消关注
@@ -202,6 +251,10 @@ func UserUnFollow(c context.Context, req types.UserUnFollowingReq) (resp interfa
 		return nil, err
 	}
 	err = mysql.NewUserDao(c).UnFollowUser(u.Id, req.Id)
+	// 使用Redis中set数据结构实现取消关注,因为用户名是唯一的，所以用用户名作为key
+	var userName string
+	mysql.NewUserDao(c).Model(&model.User{}).Select("user_name").Where("id = ?", req.Id).First(&userName)
+	redis.RedisClient.SRem(c, "UnFollow:"+strconv.Itoa(int(u.Id)), userName)
 	return resp, err
 }
 
@@ -232,7 +285,7 @@ func UserAvatarUpload(c context.Context, file multipart.File, fileSize int64, na
 }
 func UserCheckinService(c context.Context, req types.UserCheckin) (err error) {
 	u, err := ctl.GetUserInfo(c)
-	err = mysql.NewUserDaoByDB().Model(&model.User{}).Where("id = ?", u.Id).Update("daily_checkin", req.DailyCheckin).Error
+	err = mysql.NewUserDao(c).Model(&model.User{}).Where("id = ?", u.Id).Update("daily_checkin", req.DailyCheckin).Error
 	if err != nil {
 		return errors2.New("更新用户签到信息失败")
 	}

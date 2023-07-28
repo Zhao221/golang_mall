@@ -38,7 +38,6 @@ func InitDayCheckinDayTimer() {
 	}
 	c.Start() // 启动定时器
 	// 主 Goroutine 阻塞等待，这里仅作示例，实际应用中可以根据需要停止定时器
-	select {}
 }
 
 // 一个支持秒级别的 Cron 定时器，并添加了一个每个月的 25 日凌晨触发的任务。
@@ -73,5 +72,4 @@ func InitMonthCheckinTimer() {
 	// 启动定时器
 	c.Start()
 	// 主 Goroutine 阻塞等待
-	select {}
 }

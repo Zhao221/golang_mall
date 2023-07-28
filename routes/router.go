@@ -13,7 +13,7 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 	store := cookie.NewStore([]byte("something-very-secret"))
-	r.Use(middleware.Cors(), middleware.Jaeger(),gin.Recovery())
+	r.Use(middleware.Cors(), middleware.Jaeger(), gin.Recovery())
 	r.Use(sessions.Sessions("mysession", store))
 	r.StaticFS("/static", http.Dir("./static"))
 	v1 := r.Group("api/v1")
@@ -45,9 +45,11 @@ func NewRouter() *gin.Engine {
 			authed.POST("user/send_email", api.SendEmailHandler)
 			authed.GET("user/valid_email", api.ValidEmailHandler())
 			authed.POST("user/following", api.UserFollowingHandler)
+			authed.GET("user/followingList", api.UserFollowingListHandler)
 			authed.POST("user/unfollowing", api.UserUnFollowingHandler)
+			authed.GET("user/jointAttention", api.UserJointAttentionHandler)
 			authed.POST("user/avatar", api.UploadAvatarHandler) // 上传头像
-			authed.POST("user/checkin",api.UserCheckinHandler) // 用户签到
+			authed.POST("user/checkin", api.UserCheckinHandler) // 用户签到
 
 			// 商品操作
 			authed.POST("product/create", api.CreateProductHandler)

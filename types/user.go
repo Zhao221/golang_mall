@@ -36,14 +36,23 @@ type UserFollowingReq struct {
 	Id uint `json:"id"`
 }
 
+type UserFollowingList struct {
+	BasePage
+}
+
 type UserUnFollowingReq struct {
 	Id uint `json:"id"`
 }
 
+type UserJointAttentionReq struct {
+	BasePage
+	Id uint `form:"id"`
+}
+
 type SendEmailServiceReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	OperationType uint `json:"operation_type"` // OpertionType 1:绑定邮箱 2：解绑邮箱 3：改密码
+	Email         string `json:"email"`
+	Password      string `json:"password"`
+	OperationType uint   `json:"operation_type"` // OpertionType 1:绑定邮箱 2：解绑邮箱 3：改密码
 }
 
 type ValidEmailServiceReq struct {
@@ -68,4 +77,10 @@ type UserAvatar struct {
 
 type UserCheckin struct {
 	DailyCheckin *bool `json:"daily_checkin" gorm:"comment:用户今天是否签到"`
+}
+
+type UserFollowResp struct {
+	ID       uint   `json:"id"`
+	UserName string `json:"user_name" gorm:"unique"`
+	NickName string `json:"nick_name"`
 }

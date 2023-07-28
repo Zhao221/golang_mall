@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang_mall/consts"
 	"golang_mall/global"
 	"golang_mall/model/common/request"
@@ -135,10 +136,33 @@ func UserFollowingHandler(c *gin.Context) {
 	response.OkWithDetailed(resp, "关注用户成功", c)
 }
 
+// UserFollowingListHandler 查看关注用户列表失败
+func UserFollowingListHandler(c *gin.Context){
+	var req types.UserFollowingList
+	if err := c.ShouldBindQuery(&req); err != nil {
+		global.GVA_LOG.Error("查看关注列表传参失败")
+		response.FailWithMessage("查看关注列表传参失败", c)
+		return
+	}
+	resp,total, err := service.UserFollowingList(c.Request.Context(), req)
+	if err != nil {
+		global.GVA_LOG.Error("查看关注用户列表失败")
+		response.FailWithMessage("查看关注用户列表失败", c)
+		return
+	}
+	UserFollowingList:= make(map[string]interface{})
+	UserFollowingList["total"] = total
+	UserFollowingList["pageSize"] = req.PageSize
+	UserFollowingList["pageNum"] = req.PageNum
+	UserFollowingList["resp"] = resp
+	global.GVA_LOG.Info("查看关注用户列表成功", zap.Any("success",UserFollowingList))
+	response.OkWithDetailed(UserFollowingList, "查查看关注用户列表成功", c)
+}
+
 // UserUnFollowingHandler 取关
 func UserUnFollowingHandler(c *gin.Context) {
 	var req types.UserUnFollowingReq
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindQuery(&req); err != nil {
 		global.GVA_LOG.Error("取关用户绑定参数时，出错了")
 		response.FailWithMessage("取关用户绑定参数时，出错了", c)
 		return
@@ -150,6 +174,28 @@ func UserUnFollowingHandler(c *gin.Context) {
 		return
 	}
 	response.OkWithDetailed(resp, "取关用户成功", c)
+}
+
+func UserJointAttentionHandler(c *gin.Context) {
+	var req types.UserJointAttentionReq
+	if err:=c.ShouldBindQuery(&req);err!=nil{
+		global.GVA_LOG.Error("查看共同关注列表传参失败")
+		response.FailWithMessage("查看共同关注列表传参失败", c)
+		return
+	}
+	resp,total, err := service.UserJointAttentionList(c.Request.Context(), req)
+	if err != nil {
+		global.GVA_LOG.Error("查看共同关注失败")
+		response.FailWithMessage("查看共同关注失败", c)
+		return
+	}
+	JointAttention:= make(map[string]interface{})
+	JointAttention["total"] = total
+	JointAttention["pageSize"] = req.PageSize
+	JointAttention["pageNum"] = req.PageNum
+	JointAttention["resp"] = resp
+	global.GVA_LOG.Info("查看共同关注成功", zap.Any("success",JointAttention))
+	response.OkWithDetailed(JointAttention, "查看共同关注成功", c)
 }
 
 // UploadAvatarHandler 上传头像
@@ -178,5 +224,5 @@ func UserCheckinHandler(c *gin.Context) {
 		response.FailWithMessage("用户签到失败", c)
 		return
 	}
-	response.OkWithMessage("用户签到成功",c)
+	response.OkWithMessage("用户签到成功", c)
 }
