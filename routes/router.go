@@ -55,6 +55,13 @@ func NewRouter() *gin.Engine {
 			authed.POST("product/create", api.CreateProductHandler)
 			authed.PUT("product/update", api.UpdateProductHandler)
 			authed.DELETE("product/delete", api.DeleteProductHandler)
+
+			// 主题订阅，消息推送
+			authed.GET("topic/List", api.GetTopicHandler)             // 查看总的主题列表
+			authed.POST("topic/subscribe", api.SubscribeTopicHandler) // 订阅主题
+			authed.GET("topic/userList", api.GetUserTopicHandler)     // 查看用户自己的主题列表
+			authed.GET("message/list", api.GetMessageHandler)         // 获取消息列表
+			authed.DELETE("message/delete", api.DeleteMessageHandler) // 删除消息
 			// 收藏夹
 			authed.POST("favorites/create", api.CreateFavoriteHandler)
 			authed.GET("favorites/list", api.ListFavoritesHandler)

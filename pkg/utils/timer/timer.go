@@ -1,17 +1,18 @@
 package timer
 
 import (
+	"context"
 	"fmt"
 	"github.com/robfig/cron/v3"
 	"golang_mall/dao/mysql"
 	"golang_mall/dao/redis"
-	"golang_mall/global"
 	"strconv"
 )
 
 var (
 	count, month, year int64
 )
+var ctx context.Context
 
 // 在这个示例中，我们使用 robfig/cron/v3 库创建了一个支持秒级别的 Cron 定时器，
 // 并添加了一个每天凌晨 12 点触发的任务（Cron 表达式为 "0 0 0 * * *"）。
@@ -24,11 +25,13 @@ func InitDayCheckinDayTimer() {
 	_, err := c.AddFunc("0 0 0 * * *", func() {
 		fmt.Println("执行任务...")
 		var Ids []uint
-		err := mysql.NewUserDaoByDB().Table("user").Select("id").Where("daily_checkin = ?", true).Find(&Ids).Error
+		err := mysql.NewUserDao(ctx).Table("user").Select("id").Where("daily_checkin = ?", true).Find(&Ids).Error
 		if err != nil {
 			return
 		}
-		err = global.GVA_DB.Table("user").Select("daily_checkin").Where("id IN ?", Ids).UpdateColumn("daily_checkin", false).Error
+		err = mysql.NewUserDao(ctx).Table("user").Select("daily_checkin").
+			Where("id IN ?", Ids).UpdateColumn("daily_checkin", false).
+			Error
 		if err != nil {
 			return
 		}
@@ -47,26 +50,28 @@ func InitDayCheckinDayTimer() {
 func InitMonthCheckinTimer() {
 	c := cron.New(cron.WithSeconds()) // 创建一个支持秒级别的 Cron 定时器
 	// 添加定时任务
-	_,err :=c.AddFunc("0 0 0 1 * *", func() {
+	_, err := c.AddFunc("0 0 0 1 * *", func() {
 		fmt.Println("执行任务...")
 		var Ids []uint
-		err := mysql.NewUserDaoByDB().Table("user").Select("id").Find(&Ids).Error
+		err := mysql.NewUserDao(ctx).Table("user").Select("id").Find(&Ids).Error
 		if err != nil {
 			return
 		}
 		for i := 0; i < len(Ids); i++ {
-			count, err = redis.RedisClient.BitCount(redis.RedisContext, strconv.Itoa(int(Ids[i])), nil).Result()
+			count, err = redis.RedisClient.BitCount(redis.RedisContext, "Checkin"+strconv.Itoa(int(Ids[i])), nil).Result()
 			if err != nil {
 				return
 			}
-			mysql.NewUserDaoByDB().Table("user").Select("monthly_checkin", "year_checkin").Where("id = ?", Ids[i]).First(&month, &year)
+			mysql.NewUserDao(ctx).Table("user").Select("monthly_checkin").Where("id = ?", Ids[i]).First(&month)
+			mysql.NewUserDao(ctx).Table("user").Select("year_checkin").Where("id = ?", Ids[i]).First(&year)
 			month += count
+			mysql.NewUserDao(ctx).Table("user").Where("id = ?", Ids[i]).Update("monthly_checkin", month)
 			year += count
-			mysql.NewUserDaoByDB().Table("user").Where("id = ?", Ids[i]).Update("monthly_checkin", month).Update("year_checkin", year)
+			mysql.NewUserDao(ctx).Table("user").Where("id = ?", Ids[i]).Update("year_checkin", year)
 		}
 
 	})
-	if err!=nil{
+	if err != nil {
 		return
 	}
 	// 启动定时器

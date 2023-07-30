@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/Shopify/sarama"
 	errors2 "github.com/pkg/errors"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
@@ -13,7 +15,9 @@ import (
 	"golang_mall/model"
 	"golang_mall/pkg/utils/ctl"
 	"golang_mall/pkg/utils/upload"
+	"golang_mall/repository/kafka"
 	"golang_mall/types"
+	"log"
 	"mime/multipart"
 	"strconv"
 	"sync"
@@ -22,6 +26,7 @@ import (
 
 var ProductSrvIns *ProductSrv
 var ProductSrvOnce sync.Once
+var ctx context.Context
 
 type ProductSrv struct{}
 
@@ -66,27 +71,48 @@ func (s *ProductSrv) ProductCreate(c context.Context, files []*multipart.FileHea
 	if err != nil {
 		return err
 	}
+	// 需要上传大量图片且希望加快上传速度时
+	// 可以考虑使用 WaitGroup 和 goroutine 控制并发上传。
+	// 设置最大并发任务数量
+	maxConcurrentTasks := 5
+	semaphore := make(chan struct{}, maxConcurrentTasks)
 	wg := new(sync.WaitGroup)
 	wg.Add(len(files))
 	for index, file := range files {
-		num := strconv.Itoa(index)
-		tmp, _ = file.Open()
-		path, err = upload.UploadToQiNiu(tmp, file.Size, file.Filename+num)
-		if err != nil {
-			return err
-		}
-		productImg := &model.ProductImg{
-			ProductID: product.ID,
-			ImgPath:   path,
-			Name:      file.Filename,
-		}
-		err = mysql.NewProductImgDao(c).CreateProductImg(productImg)
-		if err != nil {
-
-			return err
-		}
-		wg.Done()
+		key := index
+		value := file
+		// 从信号量中获取一个空位，如果信号量已满，将会阻塞等待
+		semaphore <- struct{}{}
+		go func() {
+			defer wg.Done()                // 当上传完成时，通知 WaitGroup 已完成一个任务
+			defer func() { <-semaphore }() // 释放信号量空位，使其他任务可以执行
+			num := strconv.Itoa(key)
+			tmp, _ = value.Open()
+			path, err = upload.UploadToQiNiu(tmp, value.Size, value.Filename+num)
+			if err != nil {
+				return
+			}
+			productImg := &model.ProductImg{
+				ProductID: product.ID,
+				ImgPath:   path,
+				Name:      value.Filename,
+			}
+			err = mysql.NewProductImgDao(c).CreateProductImg(productImg)
+			if err != nil {
+				return
+			}
+		}()
 	}
+	wg.Wait()
+	// 将商品信息存入kafka
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err = mysql.NewProductDao(c).NewProduct(product)
+		if err != nil {
+			return
+		}
+	}()
 	wg.Wait()
 	return err
 }
@@ -117,7 +143,7 @@ func (s *ProductSrv) ProductDelete(ctx context.Context, req *types.ProductDelete
 	return err
 }
 
-func ProductList(c context.Context, req types.ProductListReq) (resp interface{}, err error) {
+func (s *ProductSrv) ProductList(c context.Context, req types.ProductListReq) (resp interface{}, err error) {
 	var total int64
 	condition := make(map[string]interface{})
 	if req.CategoryID != 0 {
@@ -265,4 +291,56 @@ func (s *ProductSrv) ProductImgList(c context.Context, req types.ListProductImgR
 	}
 
 	return resp, err
+}
+
+func Consume() error {
+	// 初始化 Kafka 消费者
+	brokers := []string{"localhost:9092"}
+	consumer, err := sarama.NewConsumer(brokers, kafka.Kcfg)
+	partitionConsumer, err := consumer.ConsumePartition("newProduct", 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Printf("Error consuming partition: %v", err)
+		return err
+	}
+	for {
+		select {
+		case msg := <-partitionConsumer.Messages():
+			var product model.Product
+			err = json.Unmarshal(msg.Value, &product)
+			if err != nil {
+				log.Printf("Error unmarshaling product: %v", err)
+				return err
+			} else {
+				fmt.Printf("New product: %+v\n", product)
+				var Ids []uint
+				var category string
+				mysql.NewCategoryDao(ctx).Model(&model.Category{}).Select("category_name").Where("id=?", product.CategoryID).First(&category)
+				mysql.NewTopicDao(ctx).Table("topic").Select("user_id").Where("name=?", "newProduct").Find(&Ids)
+				var messages []model.Message
+				var wg sync.WaitGroup
+				wg.Add(len(Ids))
+				for _, value := range Ids {
+					go func() {
+						defer wg.Done()
+						message := model.Message{
+							UserId:          value,
+							ProductId:       product.ID,
+							Info:            product.Info,
+							Title:           product.Title,
+							ImgPath:         product.ImgPath,
+							TopicName:       "newProduct",
+							ProductName:     product.Name,
+							ProductCategory: category,
+						}
+						messages = append(messages, message)
+					}()
+				}
+				wg.Wait()
+				mysql.NewMessageDao(ctx).Table("message").Create(&messages)
+			}
+		case err = <-partitionConsumer.Errors():
+			log.Printf("Error consuming message: %v", err)
+			return err
+		}
+	}
 }

@@ -2,10 +2,14 @@ package mysql
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/Shopify/sarama"
 	"golang_mall/global"
 	"golang_mall/model"
+	"golang_mall/repository/kafka"
 	"golang_mall/types"
 	"gorm.io/gorm"
+	"strconv"
 )
 
 type ProductDao struct {
@@ -82,4 +86,24 @@ func (dao *ProductDao) SearchProduct(info string, page types.BasePage) (products
 		Error
 
 	return
+}
+
+func (dao *ProductDao) NewProduct(product *model.Product) (err error) {
+	brokers := []string{"localhost:9092"}
+	producer, err := sarama.NewAsyncProducer(brokers, kafka.Kcfg)
+	if err != nil {
+		return err
+	}
+	key := sarama.StringEncoder(strconv.Itoa(int(product.ID)))
+	value, err := json.Marshal(product)
+	if err != nil {
+		return err
+	}
+	msg := &sarama.ProducerMessage{
+		Topic: "newProduct",
+		Key:   key,
+		Value: sarama.ByteEncoder(value),
+	}
+	producer.Input() <- msg
+	return err
 }

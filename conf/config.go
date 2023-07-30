@@ -35,9 +35,9 @@ type KafkaConfig struct {
 	DisableConsumer bool   `yaml:"disableConsumer"`
 	Debug           bool   `yaml:"debug"`
 	Address         string `yaml:"address"`
-	RequiredAck     int    `yaml:"requiredAck"`
 	ReadTimeout     int64  `yaml:"readTimeout"`
 	WriteTimeout    int64  `yaml:"writeTimeout"`
+	RequiredAck     int    `yaml:"requiredAck"`
 	MaxOpenRequests int    `yaml:"maxOpenRequests"`
 	Partition       int    `yaml:"partition"`
 }
@@ -83,8 +83,8 @@ type Redis struct {
 	RedisPort     string `yaml:"redisPort"`
 	RedisUsername string `yaml:"redisUsername"`
 	RedisPassword string `yaml:"redisPwd"`
-	RedisDbName   int    `yaml:"redisDbName"`
 	RedisNetwork  string `yaml:"redisNetwork"`
+	RedisDbName   int    `yaml:"redisDbName"`
 }
 
 // EncryptSecret 加密的东西
@@ -103,9 +103,9 @@ type LocalPhotoPath struct {
 
 type Cache struct {
 	CacheType    string `yaml:"cacheType"`
+	CacheServer  string `yaml:"cacheServer"`
 	CacheExpires int64  `yaml:"cacheExpires"`
 	CacheWarmUp  bool   `yaml:"cacheWarmUp"`
-	CacheServer  string `yaml:"cacheServer"`
 }
 
 type Es struct {

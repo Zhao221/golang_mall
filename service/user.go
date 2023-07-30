@@ -291,6 +291,6 @@ func UserCheckinService(c context.Context, req types.UserCheckin) (err error) {
 	}
 	// 同步缓存
 	currentTime := time.Now()
-	redis.RedisClient.SetBit(c, strconv.Itoa(int(u.Id)), int64(currentTime.Day()), 1)
+	redis.RedisClient.SetBit(c, "Checkin"+strconv.Itoa(int(u.Id)), int64(currentTime.Day()), 1)
 	return
 }

@@ -77,7 +77,8 @@ func ListProductsHandler(c *gin.Context){
 	if req.PageSize == 0 {
 		req.PageSize = consts.BaseProductPageSize
 	}
-	resp, err := service.ProductList(c.Request.Context(), req)
+	l:=service.GetProductSrv()
+	resp, err := l.ProductList(c.Request.Context(), req)
 	if err != nil {
 		global.GVA_LOG.Error("获取商品列表失败")
 		response.FailWithMessage("获取商品列表失败",c)

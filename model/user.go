@@ -12,17 +12,18 @@ import (
 // User 用户模型
 type User struct {
 	gorm.Model
-	UserName       string `json:"user_name" gorm:"unique"`
-	Email          string `json:"email"`
-	PasswordDigest string `json:"password_digest"`
-	NickName       string `json:"nick_name"`
-	Status         string `json:"status"`
-	Avatar         string `gorm:"size:1000"`
-	Money          string `json:"money"`
-	DailyCheckin   *bool  `json:"daily_checkin" gorm:"column:daily_checkin"`
-	MonthlyCheckin uint   `json:"monthly_checkin" gorm:"comment:月签到次数"`
-	YearCheckin    uint   `json:"year_checkin" gorm:"comment:年签到次数"`
-	Relations      []User `gorm:"many2many:relation;"`
+	UserName       string  `json:"user_name" gorm:"unique"`
+	Email          string  `json:"email"`
+	PasswordDigest string  `json:"password_digest"`
+	NickName       string  `json:"nick_name"`
+	Status         string  `json:"status"`
+	Avatar         string  `gorm:"size:1000"`
+	Money          string  `json:"money"`
+	DailyCheckin   *bool   `json:"daily_checkin" gorm:"column:daily_checkin"`
+	MonthlyCheckin uint    `json:"monthly_checkin" gorm:"comment:月签到次数"`
+	YearCheckin    uint    `json:"year_checkin" gorm:"comment:年签到次数"`
+	Relations      []User  `gorm:"many2many:relation;"`
+	Topics         []Topic `gorm:"many2many:tUser;"`
 }
 
 const (

@@ -12,17 +12,19 @@ import (
 type Product struct {
 	gorm.Model
 	Name          string `gorm:"size:255;index"`
-	CategoryID    uint   `gorm:"not null"`
+	Num           int
+	CategoryID    uint `gorm:"not null"`
+	BossID        uint
+	MessageID     uint
 	Title         string
 	Info          string `gorm:"size:1000"`
 	ImgPath       string
 	Price         string
 	DiscountPrice string
-	OnSale        bool `gorm:"default:false"`
-	Num           int
-	BossID        uint
 	BossName      string
 	BossAvatar    string
+	OnSale        bool    `gorm:"default:false"`
+	Mg            Message `gorm:"foreignKey:ProductId"`
 }
 
 // View 获取点击数

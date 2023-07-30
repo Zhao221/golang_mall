@@ -17,9 +17,9 @@ mysql:
     charset: "utf8mb4"
 
 kafka:
-  default:
+  disableConsumer:
     debug: true
-    address: localhost:9092
+    address: 127.0.0.1:9092
     requiredAck: -1 # 发送完数据后是否需要拿多少个副本确认 -1 需要全部
     readTimeout: 30 # 默认30s
     writeTimeout: 30 # 默认30s
