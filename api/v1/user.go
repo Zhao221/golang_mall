@@ -24,12 +24,12 @@ func UserRegisterHandler(c *gin.Context) {
 		response.FailWithMessage("key长度错误,必须是6位数", c)
 		return
 	}
-	if err := service.CheckUserName(userRegister); err != nil {
+	if err := service.GetUserSrv().CheckUserName(c.Request.Context(),userRegister); err != nil {
 		global.GVA_LOG.Error("用户名重复")
 		response.FailWithMessage("用户名重复", c)
 		return
 	}
-	if err := service.Register(userRegister); err != nil {
+	if err := service.GetUserSrv().Register(userRegister); err != nil {
 		global.GVA_LOG.Error("用户注册存入数据库出错了")
 		response.FailWithMessage("用户注册存入数据库出错了", c)
 		return
@@ -45,7 +45,7 @@ func UserLoginHandler(c *gin.Context) {
 		response.FailWithMessage("用户登录，绑定参数出错了", c)
 		return
 	}
-	resp, err := service.UserLogin(c.Request.Context(), login)
+	resp, err := service.GetUserSrv().UserLogin(c.Request.Context(), login)
 	if err != nil {
 		global.GVA_LOG.Error("用户登录出错了")
 		response.FailWithMessage("用户登录出错了", c)
@@ -62,7 +62,7 @@ func UserUpdateHandler(c *gin.Context) {
 		response.FailWithMessage("用户更新，绑定参数出错了", c)
 		return
 	}
-	nickName, err := service.UserUpdateInfo(c.Request.Context(), update)
+	nickName, err := service.GetUserSrv().UserUpdateInfo(c.Request.Context(), update)
 	if err != nil {
 		global.GVA_LOG.Error("用户更新出错了")
 		response.FailWithMessage("用户更新出错了", c)
@@ -73,7 +73,7 @@ func UserUpdateHandler(c *gin.Context) {
 
 // ShowUserInfoHandler 展示用户信息
 func ShowUserInfoHandler(c *gin.Context) {
-	resp, err := service.UserInfoShow(c.Request.Context())
+	resp, err := service.GetUserSrv().UserInfoShow(c.Request.Context())
 	if err != nil {
 		global.GVA_LOG.Error("获取用户信息，出错了")
 		response.FailWithMessage("获取用户信息，出错了", c)
@@ -91,7 +91,7 @@ func SendEmailHandler(c *gin.Context) {
 		response.FailWithMessage("绑定邮箱，绑定参数出错了", c)
 		return
 	}
-	resp, err := service.SendEmail(c.Request.Context(), email)
+	resp, err := service.GetUserSrv().SendEmail(c.Request.Context(), email)
 	if err != nil {
 		global.GVA_LOG.Error("绑定邮箱，出错了")
 		response.FailWithMessage("绑定邮箱，出错了", c)
@@ -109,7 +109,7 @@ func ValidEmailHandler() gin.HandlerFunc {
 			response.FailWithMessage("验证邮箱绑定参数时，出错了", c)
 			return
 		}
-		resp, err := service.Valid(c.Request.Context(), req)
+		resp, err := service.GetUserSrv().Valid(c.Request.Context(), req)
 		if err != nil {
 			global.GVA_LOG.Error("验证邮箱，出错了")
 			response.FailWithMessage("验证邮箱，出错了", c)
@@ -127,7 +127,7 @@ func UserFollowingHandler(c *gin.Context) {
 		response.FailWithMessage("关注用户绑定参数时，出错了", c)
 		return
 	}
-	resp, err := service.UserFollow(c.Request.Context(), req)
+	resp, err := service.GetUserSrv().UserFollow(c.Request.Context(), req)
 	if err != nil {
 		global.GVA_LOG.Error("关注用户失败")
 		response.FailWithMessage("关注用户失败", c)
@@ -144,7 +144,7 @@ func UserFollowingListHandler(c *gin.Context){
 		response.FailWithMessage("查看关注列表传参失败", c)
 		return
 	}
-	resp,total, err := service.UserFollowingList(c.Request.Context(), req)
+	resp,total, err := service.GetUserSrv().UserFollowingList(c.Request.Context(), req)
 	if err != nil {
 		global.GVA_LOG.Error("查看关注用户列表失败")
 		response.FailWithMessage("查看关注用户列表失败", c)
@@ -167,7 +167,7 @@ func UserUnFollowingHandler(c *gin.Context) {
 		response.FailWithMessage("取关用户绑定参数时，出错了", c)
 		return
 	}
-	resp, err := service.UserUnFollow(c.Request.Context(), req)
+	resp, err := service.GetUserSrv().UserUnFollow(c.Request.Context(), req)
 	if err != nil {
 		global.GVA_LOG.Error("取关用户，出错了")
 		response.FailWithMessage("取关用户，出错了", c)
@@ -183,7 +183,7 @@ func UserJointAttentionHandler(c *gin.Context) {
 		response.FailWithMessage("查看共同关注列表传参失败", c)
 		return
 	}
-	resp,total, err := service.UserJointAttentionList(c.Request.Context(), req)
+	resp,total, err := service.GetUserSrv().UserJointAttentionList(c.Request.Context(), req)
 	if err != nil {
 		global.GVA_LOG.Error("查看共同关注失败")
 		response.FailWithMessage("查看共同关注失败", c)
@@ -202,7 +202,7 @@ func UserJointAttentionHandler(c *gin.Context) {
 func UploadAvatarHandler(c *gin.Context) {
 	file, fileHeader, _ := c.Request.FormFile("file")
 	fileSize := fileHeader.Size
-	resp, err := service.UserAvatarUpload(c.Request.Context(), file, fileSize, fileHeader.Filename)
+	resp, err := service.GetUserSrv().UserAvatarUpload(c.Request.Context(), file, fileSize, fileHeader.Filename)
 	if err != nil {
 		global.GVA_LOG.Error("上传头像时，出错了")
 		response.FailWithMessage("上传头像时，出错了", c)
@@ -219,7 +219,7 @@ func UserCheckinHandler(c *gin.Context) {
 		response.FailWithMessage("用户签到传参有误", c)
 		return
 	}
-	if err = service.UserCheckinService(c.Request.Context(), req); err != nil {
+	if err = service.GetUserSrv().UserCheckinService(c.Request.Context(), req); err != nil {
 		global.GVA_LOG.Error("用户签到失败")
 		response.FailWithMessage("用户签到失败", c)
 		return

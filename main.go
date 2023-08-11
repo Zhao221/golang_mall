@@ -8,7 +8,6 @@ import (
 	"golang_mall/pkg/utils/log"
 	"golang_mall/pkg/utils/timer"
 	"golang_mall/repository/es"
-	"golang_mall/repository/kafka"
 	"golang_mall/routes"
 	"golang_mall/service"
 )
@@ -28,8 +27,8 @@ func loading() {
 	log.InitLog()
 	log.InitLogger() // 如果接入ELK请进入这个func打开注释
 	es.InitEs()      // 如果需要接入ELK可以打开这个注释
-	kafka.InitKafka()
-	go scriptStarting()
+	// kafka.InitKafka()
+	// go scriptStarting()
 	// rabbitmq.InitRabbitMQ() // 如果需要接入RabbitMQ可以打开这个注释
 	// track.InitJaeger( )
 }

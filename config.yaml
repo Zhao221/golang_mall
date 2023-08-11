@@ -2,7 +2,7 @@ system:
   domain: mall
   version: 1.0
   env: "dev"
-  HttpPort: ":8686"
+  HttpPort: ":9090"
   Host: "localhost"
   UploadModel: "oss"
 

@@ -19,12 +19,26 @@ import (
 	"golang_mall/types"
 	"mime/multipart"
 	"strconv"
+	"sync"
 	"time"
 )
 
-func CheckUserName(userRegister request.UserRegisterReq) (err error) {
+var UserSrvIns *UserSrv
+var UserSrvOnce sync.Once
+
+type UserSrv struct {
+}
+
+func GetUserSrv() *UserSrv {
+	UserSrvOnce.Do(func() {
+		UserSrvIns = &UserSrv{}
+	})
+	return UserSrvIns
+}
+
+func (U *UserSrv) CheckUserName(c context.Context,userRegister request.UserRegisterReq) (err error) {
 	var sum int64
-	global.GVA_DB.Table("user").Where("user_name", userRegister.UserName).Count(&sum)
+	mysql.NewUserDao(c).Table("user").Select("user_name").Where("user_name", userRegister.UserName).Count(&sum)
 	if sum != 0 {
 		return errors2.New("用户名重复")
 	}
@@ -32,7 +46,7 @@ func CheckUserName(userRegister request.UserRegisterReq) (err error) {
 }
 
 // Register 用户注册
-func Register(userRegister request.UserRegisterReq) (err error) {
+func (U *UserSrv) Register(userRegister request.UserRegisterReq) (err error) {
 	uR := &model.User{
 		NickName:       userRegister.NickName,
 		UserName:       userRegister.UserName,
@@ -57,7 +71,7 @@ func Register(userRegister request.UserRegisterReq) (err error) {
 }
 
 // UserLogin 用户登录
-func UserLogin(c context.Context, uLogin request.UserLoginReq) (resp types.UserTokenData, err error) {
+func (U *UserSrv) UserLogin(c context.Context, uLogin request.UserLoginReq) (resp types.UserTokenData, err error) {
 	var user model.User
 	userDao := mysql.NewUserDao(c)
 	user, exist, err := userDao.ExistOrNotByUserName(uLogin.UserName)
@@ -87,7 +101,7 @@ func UserLogin(c context.Context, uLogin request.UserLoginReq) (resp types.UserT
 }
 
 // UserUpdateInfo 用户修改信息
-func UserUpdateInfo(c context.Context, update request.UserUpdate) (nickName string, err error) {
+func (U *UserSrv) UserUpdateInfo(c context.Context, update request.UserUpdate) (nickName string, err error) {
 	u, _ := ctl.GetUserInfo(c)
 	if update.NickName != "" {
 		err = global.GVA_DB.Table("user").Where("id", u.Id).Update("nick_name", update.NickName).Error
@@ -99,7 +113,7 @@ func UserUpdateInfo(c context.Context, update request.UserUpdate) (nickName stri
 	return nickName, err
 }
 
-func UserInfoShow(c context.Context) (resp interface{}, err error) {
+func (U *UserSrv) UserInfoShow(c context.Context) (resp interface{}, err error) {
 	user, err := ctl.GetUserInfo(c)
 	var UInfo model.User
 	global.GVA_DB.Table("user").Where("id", user.Id).Find(&UInfo)
@@ -115,7 +129,7 @@ func UserInfoShow(c context.Context) (resp interface{}, err error) {
 	return resp, err
 }
 
-func SendEmail(c context.Context, email types.SendEmailServiceReq) (resp interface{}, err error) {
+func (U *UserSrv) SendEmail(c context.Context, email types.SendEmailServiceReq) (resp interface{}, err error) {
 	user, err := ctl.GetUserInfo(c)
 	var address string
 	token, err := jwt.GenerateEmailToken(user.Id, email.OperationType, email.Email, email.Password)
@@ -133,7 +147,7 @@ func SendEmail(c context.Context, email types.SendEmailServiceReq) (resp interfa
 }
 
 // Valid 验证内容
-func Valid(c context.Context, v types.ValidEmailServiceReq) (resp interface{}, err error) {
+func (U *UserSrv) Valid(c context.Context, v types.ValidEmailServiceReq) (resp interface{}, err error) {
 	var (
 		userId        uint
 		operationType uint
@@ -186,7 +200,7 @@ func Valid(c context.Context, v types.ValidEmailServiceReq) (resp interface{}, e
 }
 
 // UserFollow 关注用户
-func UserFollow(c context.Context, req types.UserFollowingReq) (resp interface{}, err error) {
+func (U *UserSrv) UserFollow(c context.Context, req types.UserFollowingReq) (resp interface{}, err error) {
 	u, err := ctl.GetUserInfo(c)
 	if err != nil {
 		return nil, err
@@ -199,7 +213,7 @@ func UserFollow(c context.Context, req types.UserFollowingReq) (resp interface{}
 	return resp, err
 }
 
-func UserFollowingList(c context.Context, req types.UserFollowingList) (resp interface{}, total int64, err error) {
+func (U *UserSrv) UserFollowingList(c context.Context, req types.UserFollowingList) (resp interface{}, total int64, err error) {
 	limit := req.PageSize
 	offset := limit * (req.PageNum - 1)
 	u, err := ctl.GetUserInfo(c)
@@ -219,15 +233,15 @@ func UserFollowingList(c context.Context, req types.UserFollowingList) (resp int
 	return resp, total, err
 }
 
-func UserJointAttentionList(c context.Context, req types.UserJointAttentionReq) (resp interface{}, total int64, err error) {
+func (U *UserSrv) UserJointAttentionList(c context.Context, req types.UserJointAttentionReq) (resp interface{}, total int64, err error) {
 	limit := req.PageSize
 	offset := limit * (req.PageNum - 1)
 	u, err := ctl.GetUserInfo(c)
-	if err!=nil{
+	if err != nil {
 		return nil, total, err
 	}
-	fmt.Println(req.Id,u.Id)
-	commonFollows, err := redis.RedisClient.SInter(c, "Follow:"+strconv.Itoa(int(req.Id)),"Follow:"+strconv.Itoa(int(u.Id))).Result()
+	fmt.Println(req.Id, u.Id)
+	commonFollows, err := redis.RedisClient.SInter(c, "Follow:"+strconv.Itoa(int(req.Id)), "Follow:"+strconv.Itoa(int(u.Id))).Result()
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -245,7 +259,7 @@ func UserJointAttentionList(c context.Context, req types.UserJointAttentionReq) 
 }
 
 // UserUnFollow 取消关注
-func UserUnFollow(c context.Context, req types.UserUnFollowingReq) (resp interface{}, err error) {
+func (U *UserSrv) UserUnFollow(c context.Context, req types.UserUnFollowingReq) (resp interface{}, err error) {
 	u, err := ctl.GetUserInfo(c)
 	if err != nil {
 		return nil, err
@@ -259,7 +273,7 @@ func UserUnFollow(c context.Context, req types.UserUnFollowingReq) (resp interfa
 }
 
 // UserAvatarUpload 上传头像
-func UserAvatarUpload(c context.Context, file multipart.File, fileSize int64, name string) (resp interface{}, err error) {
+func (U *UserSrv) UserAvatarUpload(c context.Context, file multipart.File, fileSize int64, name string) (resp interface{}, err error) {
 	u, err := ctl.GetUserInfo(c)
 	if err != nil {
 		return nil, err
@@ -283,7 +297,7 @@ func UserAvatarUpload(c context.Context, file multipart.File, fileSize int64, na
 	}
 	return path, err
 }
-func UserCheckinService(c context.Context, req types.UserCheckin) (err error) {
+func (U *UserSrv) UserCheckinService(c context.Context, req types.UserCheckin) (err error) {
 	u, err := ctl.GetUserInfo(c)
 	err = mysql.NewUserDao(c).Model(&model.User{}).Where("id = ?", u.Id).Update("daily_checkin", req.DailyCheckin).Error
 	if err != nil {
