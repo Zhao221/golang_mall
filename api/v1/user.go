@@ -29,7 +29,7 @@ func UserRegisterHandler(c *gin.Context) {
 		response.FailWithMessage("用户名重复", c)
 		return
 	}
-	if err := service.GetUserSrv().Register(userRegister); err != nil {
+	if err := service.GetUserSrv().Register(c.Request.Context(),userRegister); err != nil {
 		global.GVA_LOG.Error("用户注册存入数据库出错了")
 		response.FailWithMessage("用户注册存入数据库出错了", c)
 		return

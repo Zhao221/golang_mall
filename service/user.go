@@ -9,7 +9,6 @@ import (
 	"golang_mall/consts"
 	"golang_mall/dao/mysql"
 	"golang_mall/dao/redis"
-	"golang_mall/global"
 	"golang_mall/model"
 	"golang_mall/model/common/request"
 	"golang_mall/pkg/utils/ctl"
@@ -46,7 +45,7 @@ func (U *UserSrv) CheckUserName(c context.Context,userRegister request.UserRegis
 }
 
 // Register 用户注册
-func (U *UserSrv) Register(userRegister request.UserRegisterReq) (err error) {
+func (U *UserSrv) Register(c context.Context,userRegister request.UserRegisterReq) (err error) {
 	uR := &model.User{
 		NickName:       userRegister.NickName,
 		UserName:       userRegister.UserName,
@@ -66,7 +65,7 @@ func (U *UserSrv) Register(userRegister request.UserRegisterReq) (err error) {
 		return errors2.New("金额加密失败")
 	}
 	uR.Money = money
-	err = global.GVA_DB.Model(&model.User{}).Create(&uR).Error
+	err = mysql.NewUserDao(c).Model(&model.User{}).Create(&uR).Error
 	return err
 }
 
@@ -104,7 +103,7 @@ func (U *UserSrv) UserLogin(c context.Context, uLogin request.UserLoginReq) (res
 func (U *UserSrv) UserUpdateInfo(c context.Context, update request.UserUpdate) (nickName string, err error) {
 	u, _ := ctl.GetUserInfo(c)
 	if update.NickName != "" {
-		err = global.GVA_DB.Table("user").Where("id", u.Id).Update("nick_name", update.NickName).Error
+		err =mysql.NewUserDao(c).Table("user").Where("id", u.Id).Update("nick_name", update.NickName).Error
 		if err != nil {
 			return nickName, err
 		}
@@ -116,7 +115,7 @@ func (U *UserSrv) UserUpdateInfo(c context.Context, update request.UserUpdate) (
 func (U *UserSrv) UserInfoShow(c context.Context) (resp interface{}, err error) {
 	user, err := ctl.GetUserInfo(c)
 	var UInfo model.User
-	global.GVA_DB.Table("user").Where("id", user.Id).Find(&UInfo)
+	mysql.NewUserDao(c).Table("user").Where("id", user.Id).Find(&UInfo)
 	resp = types.UserInfoResp{
 		ID:       UInfo.ID,
 		UserName: UInfo.UserName,
@@ -136,7 +135,7 @@ func (U *UserSrv) SendEmail(c context.Context, email types.SendEmailServiceReq) 
 	if err != nil {
 		return nil, err
 	}
-	global.GVA_DB.Table("user").Where("id", user.Id).Update("email", email.Email)
+	mysql.NewUserDao(c).Table("user").Where("id", user.Id).Update("email", email.Email)
 	sender := Email.NewEmailSender()
 	address = conf.Config.Email.ValidEmail + token
 	mailText := fmt.Sprintf(consts.EmailOperationMap[email.OperationType], address)
@@ -227,7 +226,7 @@ func (U *UserSrv) UserFollowingList(c context.Context, req types.UserFollowingLi
 		return nil, total, err
 	}
 	var user []types.UserFollowResp
-	mysql.NewUserDaoByDB().Model(&model.User{}).Where("id IN ?", Ids).
+	mysql.NewUserDao(c).Model(&model.User{}).Where("id IN ?", Ids).
 		Count(&total).Limit(limit).Offset(offset).Find(&user)
 	resp = user
 	return resp, total, err
