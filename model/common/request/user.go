@@ -13,9 +13,9 @@ type UserLoginReq struct {
 }
 
 type UserUpdate struct {
+	UserId   uint   `json:"user_id"`
 	NickName string `json:"nick_name" gorm:"comment:昵称"`
 }
 
 type UserInfo struct {
-
 }

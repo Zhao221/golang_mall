@@ -11,9 +11,9 @@ mysql:
     dialect: "mysql"
     dbHost: "154.8.141.205"
     dbPort: "3306"
-    dbName: "mall_db"
+    dbName: "mall"
     userName: "root"
-    password: "file123456"
+    password: "Zhao06181121"
     charset: "utf8mb4"
 
 kafka:

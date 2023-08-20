@@ -35,7 +35,7 @@ func GetUserSrv() *UserSrv {
 	return UserSrvIns
 }
 
-func (U *UserSrv) CheckUserName(c context.Context,userRegister request.UserRegisterReq) (err error) {
+func (U *UserSrv) CheckUserName(c context.Context, userRegister request.UserRegisterReq) (err error) {
 	var sum int64
 	mysql.NewUserDao(c).Table("user").Select("user_name").Where("user_name", userRegister.UserName).Count(&sum)
 	if sum != 0 {
@@ -45,7 +45,7 @@ func (U *UserSrv) CheckUserName(c context.Context,userRegister request.UserRegis
 }
 
 // Register 用户注册
-func (U *UserSrv) Register(c context.Context,userRegister request.UserRegisterReq) (err error) {
+func (U *UserSrv) Register(c context.Context, userRegister request.UserRegisterReq) (err error) {
 	uR := &model.User{
 		NickName:       userRegister.NickName,
 		UserName:       userRegister.UserName,
@@ -78,7 +78,9 @@ func (U *UserSrv) UserLogin(c context.Context, uLogin request.UserLoginReq) (res
 		return resp, errors.New("用户不存在")
 	}
 	// 密码解密
-	user.CheckPassword(uLogin.Password)
+	if !user.CheckPassword(uLogin.Password) {
+		return resp, errors.New("账号/密码不正确")
+	}
 	accessToken, refreshToken, err := jwt.GenerateToken(user.ID, uLogin.UserName)
 	if err != nil {
 		return resp, err
@@ -101,9 +103,9 @@ func (U *UserSrv) UserLogin(c context.Context, uLogin request.UserLoginReq) (res
 
 // UserUpdateInfo 用户修改信息
 func (U *UserSrv) UserUpdateInfo(c context.Context, update request.UserUpdate) (nickName string, err error) {
-	u, _ := ctl.GetUserInfo(c)
+	fmt.Println(update.UserId)
 	if update.NickName != "" {
-		err =mysql.NewUserDao(c).Table("user").Where("id", u.Id).Update("nick_name", update.NickName).Error
+		err = mysql.NewUserDao(c).Model(&model.User{}).Where("id = ?", update.UserId).Update("nick_name", update.NickName).Error
 		if err != nil {
 			return nickName, err
 		}

@@ -40,7 +40,7 @@ func NewRouter() *gin.Engine {
 		{
 
 			// 用户操作
-			authed.POST("user/update", api.UserUpdateHandler)
+			authed.PUT("user/update", api.UserUpdateHandler)
 			authed.GET("user/show_info", api.ShowUserInfoHandler)
 			authed.POST("user/send_email", api.SendEmailHandler)
 			authed.GET("user/valid_email", api.ValidEmailHandler())
