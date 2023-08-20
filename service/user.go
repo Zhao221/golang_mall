@@ -86,6 +86,7 @@ func (U *UserSrv) UserLogin(c context.Context, uLogin request.UserLoginReq) (res
 		return resp, err
 	}
 	userResp := &types.UserInfoResp{
+		ID:       user.ID,
 		UserName: user.UserName,
 		NickName: user.NickName,
 		Email:    user.Email,
